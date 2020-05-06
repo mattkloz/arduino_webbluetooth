@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../../../favicon.ico">
+    <title>Bluetooth Controller</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+
+    <style>
+        .col-sm {
+            max-width: 100px !important;
+        }
+
+        .material-icons {
+            line-height: 2;
+            font-size: 2.0rem;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container" style="margin: 20%;">
+        <div class="row" style="margin-bottom: 50px;">
+            <div class="col-sm">
+                <button type="button" class="btn btn-outline-primary" id="scanbluetooth">
+                    <span class="material-icons">
+                        bluetooth
+                    </span>
+                </button>
+            </div>
+            <div class="col-sm">
+                <button type="button" class="btn btn-outline-primary" id="disconnect">
+                    <span class="material-icons">
+                        bluetooth_disabled
+                    </span>
+                </button>
+            </div>
+            <div class="col-sm">
+                <button type="button" class="btn btn-outline-primary" id="stop" style="background-color: red; color: white">
+                    <span class="material-icons">
+                        cancel
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm">
+
+            </div>
+            <div class="col-sm">
+                <button type="button" class="btn btn-outline-primary" id="forward">
+                    <span class="material-icons">
+                        keyboard_arrow_up
+                    </span>
+                </button>
+            </div>
+            <div class="col-sm">
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+                <button type="button" class="btn btn-outline-primary" id="left">
+                    <span class="material-icons">
+                        keyboard_arrow_left
+                    </span>
+                </button>
+            </div>
+            <div class="col-sm">
+
+            </div>
+            <div class="col-sm">
+                <button type="button" class="btn btn-outline-primary" id="right">
+                    <span class="material-icons">
+                        keyboard_arrow_right
+                    </span>
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm">
+
+            </div>
+            <div class="col-sm">
+                <button type="button" class="btn btn-outline-primary" id="reverse">
+                    <span class="material-icons">
+                        keyboard_arrow_down
+                    </span>
+                </button>
+            </div>
+            <div class="col-sm">
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.js" crossorigin="anonymous"></script>
+
+    <script>
+        const characteristic = null;
+        const bluetoothDevice = null;
+        const encoder = new TextEncoder('utf-8');
+
+        $('#scanbluetooth').click(function() {
+            scanbluetooth();
+        });
+        $('#disconnect').click(function() {
+            disconnect();
+        });
+        $('#stop').click(function() {
+            stop();
+        });
+        $('#forward').click(function() {
+            forward();
+        });
+        $('#reverse').click(function() {
+            reverse();
+        });
+        $('#left').click(function() {
+            left();
+        });
+        $('#right').click(function() {
+            right();
+        });
+
+        //Note: this will only work on Chrome and probably Edge and (maybe??) Firefox. I've only used in Chrome. Safari doesn't support WebBluetooth yet. This is for connecting to an HM-10 BT module. You can read more about interactive with your device at: https://googlechrome.github.io/samples/web-bluetooth/
+        async function scanbluetooth() {
+            bluetoothDevice = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: [0xffe0]
+            });
+            const server = await this.bluetoothDevice.gatt.connect()
+            const service = await server.getPrimaryService(0xffe0)
+            characteristic = await service.getCharacteristic(0xffe1);
+        };
+
+        function disconnect() {
+            if (!this.bluetoothDevice) {
+                console.log('> Not Connected to Anything')
+                return;
+            }
+            console.log('> Disconnecting from Bluetooth Device...');
+            if (this.bluetoothDevice.gatt.connected) {
+                this.bluetoothDevice.gatt.disconnect();
+                console.log(`> Disconnected from ${bluetoothDevice.name}`)
+                bluetoothDevice = null;
+            } else {
+                console.log('> Bluetooth Device is already disconnected');
+            }
+        };
+
+        //These are the commands in your arduino sketch so you will need to modify for your project/device. For example, if your device has a characteristic of "Set_Temp" you'd define that characteristic above as a variable () above (e.g. const Set_Temp or characteristic.Set_Temp) and then pass it the command to set the temp to 100 (e.g. characteristic.writeValue(encoder.encode('100'))). I'm not sure these calls need to be asynchronous but I did it just to be sure there weren't any race conditions on the arduino since I'm not very experienced with it.
+        async function forward() {
+            await characteristic.writeValue(encoder.encode('B'))
+        };
+        async function reverse() {
+            await characteristic.writeValue(encoder.encode('F'))
+        };
+        async function left() {
+            await characteristic.writeValue(encoder.encode('L'))
+        };
+        async function right() {
+            await characteristic.writeValue(encoder.encode('R'))
+        };
+        async function stop() {
+            await characteristic.writeValue(encoder.encode('Stop'))
+        };
+    </script>
+</body>
+
+</html>
